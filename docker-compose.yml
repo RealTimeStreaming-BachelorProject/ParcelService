@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  packageservice:
+    build:
+      context: ./
+      dockerfile: dockerfile.dev
+    container_name: packageservice-dev
+    volumes:
+      - ./src:/opt/app/src/ # for dev purposes

@@ -1,0 +1,14 @@
+FROM node
+
+WORKDIR /opt/app
+
+COPY package*.json ./
+
+RUN npm ci && npm install -g typescript
+
+COPY tsconfig.json ./
+
+# Copy the rest of the files except the ones specified in .dockerignore
+COPY ./src ./src/
+
+CMD [ "npm", "start" ]
