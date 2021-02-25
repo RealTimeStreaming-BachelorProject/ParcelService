@@ -1,28 +1,20 @@
 import express from "express";
 import logger from "./util/logger";
-import cassandra from "cassandra-driver";
 import cors from "cors";
-import { initDB } from "./cassandra.scripts";
 import { registerControllers } from "./controllers";
-
-const cassandraClient = new cassandra.Client({
-  contactPoints: JSON.parse(process.env.CASSANDRA_NODES as string),
-  localDataCenter: process.env.CASSANDRA_LOCAL_DATACENTER,
-});
-
+import { initCassandraConnection } from "./helpers/cassandra.scripts";
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT ?? 9999;
+const PORT = process.env.PACKAGE_SERVICE_PORT ?? 9999;
 
 (async () => {
-  await cassandraClient.connect();
-  await initDB(cassandraClient);
-  registerControllers(app)
+  const cassandraClient = await initCassandraConnection();
+  registerControllers(app);
   app.listen(PORT, () => {
-      logger.info("🚀 PackageService Running")
-  })
+    logger.info(`🚀 PackageService Running On Port ${PORT}`);
+  });
 })().catch((e) => {
-  logger.error(e.message);
+  logger.error(e);
 });
