@@ -10,6 +10,10 @@ services:
     environment:
       CASSANDRA_NODES: '["cassandra1", "cassandra2"]'
       CASSANDRA_LOCAL_DATACENTER: "Denmark"
+      CASSANDRA_KEYSPACE: "PackageService"
+      PACKAGE_SERVICE_PORT: 6000
+    ports:
+      - 6000:6000
     volumes:
       - ./src:/opt/app/src/ # for dev purposes
   
@@ -26,7 +30,7 @@ services:
       - 7000:7000
 
   cassandra2:
-    image: cassandra
+    image: omvk97/cassandra # this image will initialize the database
     container_name: cassandra2
     environment:
       CASSANDRA_SEEDS: cassandra1,cassandra2
@@ -36,3 +40,5 @@ services:
     ports:
       - 9043:9042
       - 7001:7000
+    volumes:
+      - "./cassandra/init.cql:/docker-entrypoint-initdb.d/init.cql"
