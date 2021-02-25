@@ -20,7 +20,7 @@ function registerPackagePostRoute(app: Express) {
       weightKg,
     } = req.body;
     const packageID = uuidv4();
-    const expectedDeliveryDate = new Date(2021, 3, 1, 12, 30).getMilliseconds();
+    const expectedDeliveryDate = new Date(2021, 3, 1, 12, 30);
     try {
       insertPackageDetails({
         packageID,

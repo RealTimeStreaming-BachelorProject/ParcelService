@@ -9,7 +9,7 @@ export interface IPackageDetails {
   senderAddress: string;
   senderName: string;
   weightKg: number;
-  expectedDeliveryDate: number;
+  expectedDeliveryDate: Date;
 }
 
 export async function insertPackageDetails(packageDetails: IPackageDetails) {
