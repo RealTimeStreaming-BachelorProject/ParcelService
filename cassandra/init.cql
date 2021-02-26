@@ -19,12 +19,12 @@ CREATE TABLE IF NOT EXISTS PackageHistory (
     packageID UUID,
     status INT,
     message TEXT,
-    PRIMARY KEY ( packageID, status )
+    entryDate TIMESTAMP,
+    PRIMARY KEY ( packageID, entryDate, status  )
 );
 
 CREATE TABLE IF NOT EXISTS PackageTracking (
     packageID UUID,
-    trackingLink TEXT,
     driverID UUID,
     expectedDeliveryTime TIMESTAMP,
     PRIMARY KEY( packageID, driverID )
