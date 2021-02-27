@@ -48,6 +48,21 @@ function postRegisterPackage(app: Express) {
         senderName,
         weightKg,
       } = req.body;
+      if (
+        !receiverAddress ||
+        !receiverName ||
+        !receiverEmail ||
+        !senderAddress ||
+        !senderName ||
+        !weightKg
+      ) {
+        const response: IResponseJsonBody = {
+          status: 400,
+          message: "One or more body parameters invalid",
+        };
+        res.status(400).json(response);
+        return;
+      }
       const packageID = uuidv4();
       const tomorrowDelivery = new Date();
       tomorrowDelivery.setDate(tomorrowDelivery.getDate() + 1);
