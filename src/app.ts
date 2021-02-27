@@ -1,3 +1,6 @@
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
 import express from "express";
 import logger from "./util/logger";
 import cors from "cors";

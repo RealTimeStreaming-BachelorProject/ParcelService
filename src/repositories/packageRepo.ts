@@ -33,7 +33,9 @@ export interface IPackageTracking {
   expectedDeliveryTime: Date;
 }
 
-export async function insertPackageDetails(packageDetails: IPackageDetails) {
+export async function insertPackageDetails(
+  packageDetails: IPackageDetails
+): Promise<string> {
   const query = `INSERT INTO PackageDetails
                 (packageID, receiverAddress, receiverName, receiverEmail, senderAddress, senderName, weightKg, registered, expectedDeliveryDate)
                 VALUES (
@@ -49,13 +51,15 @@ export async function insertPackageDetails(packageDetails: IPackageDetails) {
                         );`;
   const params = Object.values(packageDetails);
   await cassandraClient.execute(query, params, { prepare: true });
+  const packageHistoryMessage = `We have been notified of your purchase at ${
+    packageDetails.senderName
+  }. We expect to deliver your package ${packageDetails.expectedDeliveryDate.toDateString()}`;
   await insertPackageHistory({
     packageID: packageDetails.packageID,
     status: PackageHistoryEnum.PACKAGE_REGISTERED,
-    message: `We have been notified of your purchase at ${
-      packageDetails.senderName
-    }. We expect to deliver your package ${packageDetails.expectedDeliveryDate.toDateString()}`,
+    message: packageHistoryMessage,
   });
+  return packageHistoryMessage;
 }
 
 export async function insertPackageHistory(packageHistory: IPackageHistory) {
@@ -69,6 +73,14 @@ export async function insertPackageHistory(packageHistory: IPackageHistory) {
                         );`;
   const params = Object.values(packageHistory);
   await cassandraClient.execute(query, params, { prepare: true });
+}
+
+export async function findPackageReceieverEmail(
+  packageID: string
+): Promise<string> {
+  const query = `SELECT receiveremail FROM packagedetails WHERE packageID = ?;`;
+  const resultSet = await cassandraClient.execute(query, [packageID], { prepare: true });
+  return resultSet.first().receiveremail
 }
 
 export async function insertPackageTrackingDetails(
@@ -164,8 +176,7 @@ export async function findPackageDetails(
     }
   );
 
-  let driverid: string | undefined,
-    expecteddeliverytime: Date | undefined;
+  let driverid: string | undefined, expecteddeliverytime: Date | undefined;
 
   const trackingDetails = pTResultSet.first();
   if (trackingDetails) {
