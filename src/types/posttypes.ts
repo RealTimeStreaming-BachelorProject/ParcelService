@@ -8,12 +8,14 @@ export interface IPostRegisterPackageRequest extends Request {
     senderAddress: string;
     senderName: string;
     weightKg: number;
+    fakeScenario?: boolean;
   };
 }
 
 export interface IPostPackageCentralDeliveryRequest extends Request {
   body: {
     packageIDs: string[];
+    fakeScenario?: boolean;
   };
 }
 
@@ -21,6 +23,7 @@ export interface IPostPackageInRouteRequest extends Request {
   body: {
     packageIDs: string[];
     driverID: string;
+    fakeScenario?: boolean;
   };
 }
 

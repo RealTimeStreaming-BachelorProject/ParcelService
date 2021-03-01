@@ -47,6 +47,7 @@ function postRegisterPackage(app: Express) {
         senderAddress,
         senderName,
         weightKg,
+        fakeScenario,
       } = req.body;
       if (
         !receiverAddress ||
@@ -79,16 +80,19 @@ function postRegisterPackage(app: Express) {
           weightKg,
           expectedDeliveryDate,
         });
-        await sendNotification({
-          packageID,
-          receiverEmail,
-          updateDate: new Date(),
-          updateMessage,
-        });
+        if (!fakeScenario) {
+          sendNotification({
+            packageID,
+            receiverEmail,
+            updateDate: new Date(),
+            updateMessage,
+          });
+        }
         const response: IResponseJsonBody = {
           status: 201,
           message: "Package registered",
         };
+        response["packageID"] = packageID;
         res.status(201).json(response);
       } catch (e) {
         logger.error(e);
@@ -106,11 +110,20 @@ function postPackageCentralDelivery(app: Express) {
   app.post(
     PACKAGE_CENTRAL_DELIVERY,
     async (req: IPostPackageCentralDeliveryRequest, res: Response) => {
-      const { packageIDs } = req.body;
+      const { packageIDs, fakeScenario } = req.body;
       if (!packageIDs) {
         const response: IResponseJsonBody = {
           status: 400,
           message: "Invalid Body",
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      if (packageIDs.length === 0) {
+        const response: IResponseJsonBody = {
+          status: 400,
+          message: "No packageIDs",
         };
         res.status(400).json(response);
         return;
@@ -131,16 +144,18 @@ function postPackageCentralDelivery(app: Express) {
             status: PackageHistoryEnum.PACKAGE_AT_CENTRAL,
             message: updateMessage,
           });
-          await sendNotification({
-            packageID,
-            receiverEmail: await findPackageReceieverEmail(packageID),
-            updateDate: new Date(),
-            updateMessage,
-          });
+          if (!fakeScenario) {
+            sendNotification({
+              packageID,
+              receiverEmail: await findPackageReceieverEmail(packageID),
+              updateDate: new Date(),
+              updateMessage,
+            });
+          }
         }
         const response: IResponseJsonBody = {
           status: 200,
-          message: "Package registered at central",
+          message: "Package(s) registered at central",
         };
         res.status(200).json(response);
       } catch (error) {
@@ -159,11 +174,19 @@ function postPackageInRoute(app: Express) {
   app.post(
     PACKAGE_IN_ROUTE,
     async (req: IPostPackageInRouteRequest, res: Response) => {
-      const { packageIDs, driverID } = req.body;
+      const { packageIDs, driverID, fakeScenario } = req.body;
       if (!packageIDs || !driverID) {
         const response: IResponseJsonBody = {
           status: 400,
           message: "Invalid Body",
+        };
+        res.status(400).json(response);
+        return;
+      }
+      if (packageIDs.length === 0) {
+        const response: IResponseJsonBody = {
+          status: 400,
+          message: "No packageIDs",
         };
         res.status(400).json(response);
         return;
@@ -200,17 +223,19 @@ function postPackageInRoute(app: Express) {
             driverID,
             expectedDeliveryTime,
           });
-          await sendNotification({
-            packageID,
-            receiverEmail: await findPackageReceieverEmail(packageID),
-            updateDate: new Date(),
-            updateMessage:
-              updateMessage + ". Check the link for real time tracking",
-          });
+          if (!fakeScenario) {
+            sendNotification({
+              packageID,
+              receiverEmail: await findPackageReceieverEmail(packageID),
+              updateDate: new Date(),
+              updateMessage:
+                updateMessage + ". Check the link for real time tracking",
+            });
+          }
         }
         const response: IResponseJsonBody = {
           status: 200,
-          message: "Package registered in-route",
+          message: "Package(s) registered in-route",
         };
         res.status(200).json(response);
       } catch (error) {
@@ -248,6 +273,8 @@ function getPackageDetails(app: Express) {
           return;
         }
         const packageDetails = await findPackageDetails(packageID);
+        packageDetails["status"] = 200;
+        packageDetails["message"] = "Package found";
         res.json(packageDetails);
       } catch (error) {
         if (error instanceof NotFoundInCassandraError) {

@@ -11,10 +11,10 @@ services:
       CASSANDRA_NODES: '["cassandra1", "cassandra2"]'
       CASSANDRA_LOCAL_DATACENTER: "Denmark"
       CASSANDRA_KEYSPACE: "PackageService"
-      PACKAGE_SERVICE_PORT: 9999
+      PACKAGE_SERVICE_PORT: 9001
       NOTIFICATION_SERVICE_ENDPOINT: http://192.168.50.65:10001/packageupdate
     ports:
-      - 9999:9999
+      - 9001:9001
     volumes:
       - ./src:/opt/app/src/ # for dev purposes
   

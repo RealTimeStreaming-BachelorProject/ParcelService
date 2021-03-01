@@ -14,5 +14,4 @@ export async function sendNotification(jsonBody: {
       headers: { "Content-Type": "application/json" },
     }
   ).then((res) => res.json());
-  console.log(response);
 }
