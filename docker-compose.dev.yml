@@ -1,0 +1,36 @@
+version: "3"
+
+services:
+  notificationservice:
+    image: omvk97/notificationservice:1.0
+    container_name: notificationservice
+    env_file:
+      - .env.dev
+    ports:
+      - 10002:10002
+
+  packageservice:
+    build:
+      context: ./
+      dockerfile: dockerfile.dev
+    container_name: packageservice-dev
+    env_file:
+      - .env.dev
+    ports:
+      - 9001:9001
+    volumes:
+      - ./src:/opt/app/src/ # for dev purposes
+
+  cassandra2:
+    image: omvk97/cassandra # this image will initialize the database
+    container_name: cassandra2
+    environment:
+      CASSANDRA_SEEDS: cassandra2
+      CASSANDRA_CLUSTER_NAME: DevCluster
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      CASSANDRA_DC: Denmark
+    ports:
+      - 9043:9042
+      - 7001:7000
+    volumes:
+      - "./cassandra/init.cql:/docker-entrypoint-initdb.d/init.cql"

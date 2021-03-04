@@ -1,47 +1,10 @@
 version: "3"
 
 services:
-  
   packageservice:
-    build:
-      context: ./
-      dockerfile: dockerfile.dev
+    image: omvk97/packageservice
     container_name: packageservice-dev
-    environment:
-      # CASSANDRA_NODES: '["cassandra1", "cassandra2"]'
-      CASSANDRA_NODES: '["cassandra2"]'
-      CASSANDRA_LOCAL_DATACENTER: "Denmark"
-      CASSANDRA_KEYSPACE: "PackageService"
-      PACKAGE_SERVICE_PORT: 9001
-      NOTIFICATION_SERVICE_ENDPOINT: http://192.168.50.65:10001/packageupdate
+    env_file:
+      - .env
     ports:
       - 9001:9001
-    volumes:
-      - ./src:/opt/app/src/ # for dev purposes
-  
-  # cassandra1:
-  #   image: cassandra
-  #   container_name: cassandra1
-  #   environment:
-  #     CASSANDRA_SEEDS: cassandra1,cassandra2
-  #     CASSANDRA_CLUSTER_NAME: DevCluster
-  #     CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
-  #     CASSANDRA_DC: Denmark
-  #   ports:
-  #     - 9042:9042
-  #     - 7000:7000
-
-  cassandra2:
-    image: omvk97/cassandra # this image will initialize the database
-    container_name: cassandra2
-    environment:
-      # CASSANDRA_SEEDS: cassandra1,cassandra2
-      CASSANDRA_SEEDS: cassandra2
-      CASSANDRA_CLUSTER_NAME: DevCluster
-      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
-      CASSANDRA_DC: Denmark
-    ports:
-      - 9043:9042
-      - 7001:7000
-    volumes:
-      - "./cassandra/init.cql:/docker-entrypoint-initdb.d/init.cql"
