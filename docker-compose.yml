@@ -8,7 +8,8 @@ services:
       dockerfile: dockerfile.dev
     container_name: packageservice-dev
     environment:
-      CASSANDRA_NODES: '["cassandra1", "cassandra2"]'
+      # CASSANDRA_NODES: '["cassandra1", "cassandra2"]'
+      CASSANDRA_NODES: '["cassandra2"]'
       CASSANDRA_LOCAL_DATACENTER: "Denmark"
       CASSANDRA_KEYSPACE: "PackageService"
       PACKAGE_SERVICE_PORT: 9001
@@ -18,23 +19,24 @@ services:
     volumes:
       - ./src:/opt/app/src/ # for dev purposes
   
-  cassandra1:
-    image: cassandra
-    container_name: cassandra1
-    environment:
-      CASSANDRA_SEEDS: cassandra1,cassandra2
-      CASSANDRA_CLUSTER_NAME: DevCluster
-      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
-      CASSANDRA_DC: Denmark
-    ports:
-      - 9042:9042
-      - 7000:7000
+  # cassandra1:
+  #   image: cassandra
+  #   container_name: cassandra1
+  #   environment:
+  #     CASSANDRA_SEEDS: cassandra1,cassandra2
+  #     CASSANDRA_CLUSTER_NAME: DevCluster
+  #     CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+  #     CASSANDRA_DC: Denmark
+  #   ports:
+  #     - 9042:9042
+  #     - 7000:7000
 
   cassandra2:
     image: omvk97/cassandra # this image will initialize the database
     container_name: cassandra2
     environment:
-      CASSANDRA_SEEDS: cassandra1,cassandra2
+      # CASSANDRA_SEEDS: cassandra1,cassandra2
+      CASSANDRA_SEEDS: cassandra2
       CASSANDRA_CLUSTER_NAME: DevCluster
       CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
       CASSANDRA_DC: Denmark
