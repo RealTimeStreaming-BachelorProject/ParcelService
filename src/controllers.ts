@@ -23,6 +23,7 @@ import {
 import { v4 as uuidv4, validate } from "uuid";
 import logger from "./util/logger";
 import { sendNotification } from "./api/notificationService";
+import { packageCentralDeliverySchema } from "./helpers/validators";
 
 export function registerControllers(app: Express) {
   postRegisterPackage(app);
@@ -61,8 +62,7 @@ function postRegisterPackage(app: Express) {
           status: 400,
           message: "One or more body parameters invalid",
         };
-        res.status(400).json(response);
-        return;
+        return res.status(400).json(response);
       }
       const packageID = uuidv4();
       const tomorrowDelivery = new Date();
@@ -80,7 +80,7 @@ function postRegisterPackage(app: Express) {
           weightKg,
           expectedDeliveryDate,
         });
-        if (!fakeScenario) {
+        if (fakeScenario !== undefined && !fakeScenario) {
           sendNotification({
             packageID,
             receiverEmail,
@@ -93,14 +93,14 @@ function postRegisterPackage(app: Express) {
           message: "Package registered",
         };
         response["packageID"] = packageID;
-        res.status(201).json(response);
+        return res.status(201).json(response);
       } catch (e) {
         logger.error(e);
         const response: IResponseJsonBody = {
           status: 500,
           message: "Error, please try again later",
         };
-        res.status(500).json(response);
+        return res.status(500).json(response);
       }
     }
   );
@@ -109,6 +109,7 @@ function postRegisterPackage(app: Express) {
 function postPackageCentralDelivery(app: Express) {
   app.post(
     PACKAGE_CENTRAL_DELIVERY,
+    packageCentralDeliverySchema,
     async (req: IPostPackageCentralDeliveryRequest, res: Response) => {
       const { packageIDs, fakeScenario } = req.body;
       if (!packageIDs) {
@@ -116,8 +117,7 @@ function postPackageCentralDelivery(app: Express) {
           status: 400,
           message: "Invalid Body",
         };
-        res.status(400).json(response);
-        return;
+        return res.status(400).json(response);
       }
 
       if (packageIDs.length === 0) {
@@ -125,10 +125,8 @@ function postPackageCentralDelivery(app: Express) {
           status: 400,
           message: "No packageIDs",
         };
-        res.status(400).json(response);
-        return;
+        return res.status(400).json(response);
       }
-
       try {
         for (const packageID of packageIDs) {
           if (!validate(packageID)) {
@@ -136,7 +134,7 @@ function postPackageCentralDelivery(app: Express) {
               status: 400,
               message: "One or more packageIDs are invalid",
             };
-            res.status(400).json(response);
+            return res.status(400).json(response);
           }
           const updateMessage = `We have received your package and are processing it`;
           await insertPackageHistory({
@@ -144,7 +142,7 @@ function postPackageCentralDelivery(app: Express) {
             status: PackageHistoryEnum.PACKAGE_AT_CENTRAL,
             message: updateMessage,
           });
-          if (!fakeScenario) {
+          if (fakeScenario !== undefined && !fakeScenario) {
             sendNotification({
               packageID,
               receiverEmail: await findPackageReceieverEmail(packageID),
@@ -157,14 +155,14 @@ function postPackageCentralDelivery(app: Express) {
           status: 200,
           message: "Package(s) registered at central",
         };
-        res.status(200).json(response);
+        return res.status(200).json(response);
       } catch (error) {
         logger.error(error);
         const response: IResponseJsonBody = {
           status: 500,
           message: "Server error, please try again later",
         };
-        res.status(500).json(response);
+        return res.status(500).json(response);
       }
     }
   );
@@ -180,24 +178,21 @@ function postPackageInRoute(app: Express) {
           status: 400,
           message: "Invalid Body",
         };
-        res.status(400).json(response);
-        return;
+        return res.status(400).json(response);
       }
       if (packageIDs.length === 0) {
         const response: IResponseJsonBody = {
           status: 400,
           message: "No packageIDs",
         };
-        res.status(400).json(response);
-        return;
+        return res.status(400).json(response);
       }
       if (!validate(driverID)) {
         const response: IResponseJsonBody = {
           status: 400,
           message: "Invalid driverID",
         };
-        res.status(400).json(response);
-        return;
+        return res.status(400).json(response);
       }
       try {
         for (const packageID of packageIDs) {
@@ -206,8 +201,7 @@ function postPackageInRoute(app: Express) {
               status: 400,
               message: "One or more packageIDs are invalid",
             };
-            res.status(400).json(response);
-            return;
+            return res.status(400).json(response);
           }
           const updateMessage = "Your package is in route";
           await insertPackageHistory({
@@ -223,7 +217,7 @@ function postPackageInRoute(app: Express) {
             driverID,
             expectedDeliveryTime,
           });
-          if (!fakeScenario) {
+          if (fakeScenario !== undefined && !fakeScenario) {
             sendNotification({
               packageID,
               receiverEmail: await findPackageReceieverEmail(packageID),
@@ -237,14 +231,14 @@ function postPackageInRoute(app: Express) {
           status: 200,
           message: "Package(s) registered in-route",
         };
-        res.status(200).json(response);
+        return res.status(200).json(response);
       } catch (error) {
         logger.error(error);
         const response: IResponseJsonBody = {
           status: 500,
           message: "Server error, please try again later",
         };
-        res.status(500).json(response);
+        return res.status(500).json(response);
       }
     }
   );
@@ -261,35 +255,33 @@ function getPackageDetails(app: Express) {
             status: 400,
             message: "Invalid PackageID",
           };
-          res.status(400).json(response);
-          return;
+          return res.status(400).json(response);
         }
         if (!validate(packageID)) {
           const response: IResponseJsonBody = {
             status: 400,
             message: "Invalid PackageID",
           };
-          res.status(400).json(response);
-          return;
+          return res.status(400).json(response);
         }
         const packageDetails = await findPackageDetails(packageID);
         packageDetails["status"] = 200;
         packageDetails["message"] = "Package found";
-        res.json(packageDetails);
+        return res.json(packageDetails);
       } catch (error) {
         if (error instanceof NotFoundInCassandraError) {
           const response: IResponseJsonBody = {
             status: 404,
             message: "Package not found",
           };
-          res.status(404).json(response);
+          return res.status(404).json(response);
         } else {
           logger.error(error);
           const response: IResponseJsonBody = {
             status: 500,
             message: "Server error, please try again later",
           };
-          res.status(500).json(response);
+          return res.status(500).json(response);
         }
       }
     }

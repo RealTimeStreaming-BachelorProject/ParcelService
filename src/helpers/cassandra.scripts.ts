@@ -4,7 +4,7 @@ import logger from "../util/logger";
 export const cassandraClient = new cassandra.Client({
   contactPoints: JSON.parse(process.env.CASSANDRA_NODES as string),
   localDataCenter: process.env.CASSANDRA_LOCAL_DATACENTER,
-  keyspace: "packageservice",
+  keyspace: process.env.CASSANDRA_KEYSPACE,  
 });
 
 export async function initCassandraConnection(): Promise<Client> {
