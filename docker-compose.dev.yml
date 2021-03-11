@@ -1,14 +1,6 @@
 version: "3"
 
 services:
-  notificationservice:
-    image: omvk97/notificationservice:1.0
-    container_name: notificationservice
-    env_file:
-      - .env.dev
-    ports:
-      - 10002:10002
-
   packageservice:
     build:
       context: ./
@@ -21,16 +13,15 @@ services:
     volumes:
       - ./src:/opt/app/src/ # for dev purposes
 
-  cassandra:
-    image: omvk97/cassandra # this image will initialize the database
-    container_name: cassandra
+  postgres:
+    image: postgres
+    container_name: postgres
     environment:
-      CASSANDRA_SEEDS: cassandra
-      CASSANDRA_CLUSTER_NAME: DevCluster
-      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
-      CASSANDRA_DC: Denmark
+      POSTGRES_USER: packageservice
+      POSTGRES_PASSWORD: Packageservice_database_password1
+      POSTGRES_DB: packageservice-database
     ports:
-      - 9043:9042
-      - 7001:7000
+      - 5432:5432
     volumes:
-      - "./cassandra/init.cql:/docker-entrypoint-initdb.d/init.cql"
+      # Inside postgres we can specify sql script which is run in alphabetical order. This script creates the database
+      - "./sql/blankdatabasestartup.sql:/docker-entrypoint-initdb.d/init.sql"
