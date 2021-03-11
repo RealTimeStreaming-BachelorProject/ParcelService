@@ -5,7 +5,7 @@ import express from "express";
 import logger from "./util/logger";
 import cors from "cors";
 import { registerControllers } from "./controllers";
-import { initCassandraConnection } from "./helpers/cassandra.scripts";
+import { initDBConnection } from "./helpers/database.scripts";
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -13,7 +13,7 @@ app.use(express.json());
 const PORT = process.env.PACKAGE_SERVICE_PORT ?? 80;
 
 (async () => {
-  const cassandraClient = await initCassandraConnection();
+  await initDBConnection();
   registerControllers(app);
   app.listen(PORT, () => {
     logger.info(`🚀 PackageService Running On Port ${PORT}`);

@@ -1,17 +1,17 @@
 version: "3"
 
 services:
-  packageservice:
-    build:
-      context: ./
-      dockerfile: dockerfile.dev
-    container_name: packageservice-dev
-    env_file:
-      - .env.dev
-    ports:
-      - 9001:9001
-    volumes:
-      - ./src:/opt/app/src/ # for dev purposes
+  # packageservice:
+  #   build:
+  #     context: ./
+  #     dockerfile: dockerfile.dev
+  #   container_name: packageservice-dev
+  #   env_file:
+  #     - .env.dev
+  #   ports:
+  #     - 9001:9001
+  #   volumes:
+  #     - ./src:/opt/app/src/ # for dev purposes
 
   postgres:
     image: postgres

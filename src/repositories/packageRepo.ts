@@ -1,4 +1,4 @@
-import { cassandraClient } from "../helpers/cassandra.scripts";
+import { pool } from "../helpers/database.scripts";
 
 export interface IPackageDetails {
   packageID: string;
@@ -8,22 +8,19 @@ export interface IPackageDetails {
   senderAddress: string;
   senderName: string;
   weightKg: number;
-  registered?: Date; // Is set by Cassandra
+  registered?: Date; // Is set by database
   expectedDeliveryDate: Date;
 }
 
-// This enum's static values should never be changed without great consideration to Cassandra.
-// Cassandra relies on these numbers to print out the correct message
-// TODO: Create a unit test on this
 export enum PackageHistoryEnum {
-  PACKAGE_REGISTERED = 0,
-  PACKAGE_AT_CENTRAL = 1,
-  PACKAGE_IN_ROUTE = 2,
+  PACKAGE_REGISTERED = "PACKAGE_REGISTERED",
+  PACKAGE_AT_CENTRAL = "PACKAGE_AT_CENTRAL",
+  PACKAGE_IN_ROUTE = "PACKAGE_IN_ROUTE",
 }
 
 export interface IPackageHistory {
   packageID: string;
-  status: number;
+  status: string;
   message: string;
 }
 
@@ -39,18 +36,19 @@ export async function insertPackageDetails(
   const query = `INSERT INTO PackageDetails
                 (packageID, receiverAddress, receiverName, receiverEmail, senderAddress, senderName, weightKg, registered, expectedDeliveryDate)
                 VALUES (
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        totimestamp(now()),
-                        ?
-                        );`;
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6,
+                        $7,
+                        now(),
+                        $8
+                        )`;
   const params = Object.values(packageDetails);
-  await cassandraClient.execute(query, params, { prepare: true });
+  await pool.query(query, params);
+
   const packageHistoryMessage = `We have been notified of your purchase at ${
     packageDetails.senderName
   }. We expect to deliver your package ${packageDetails.expectedDeliveryDate.toDateString()}`;
@@ -66,21 +64,21 @@ export async function insertPackageHistory(packageHistory: IPackageHistory) {
   const query = `INSERT INTO PackageHistory
                   (packageID, status, message, entryDate)
                   VALUES (
-                          ?,
-                          ?,
-                          ?,
-                          totimestamp(now())
-                        );`;
+                          $1,
+                          $2,
+                          $3,
+                          now()
+                        )`;
   const params = Object.values(packageHistory);
-  await cassandraClient.execute(query, params, { prepare: true });
+  await pool.query(query, params);
 }
 
 export async function findPackageReceieverEmail(
   packageID: string
 ): Promise<string> {
-  const query = `SELECT receiveremail FROM packagedetails WHERE packageID = ?;`;
-  const resultSet = await cassandraClient.execute(query, [packageID], { prepare: true });
-  return resultSet.first().receiveremail
+  const query = `SELECT receiveremail FROM packagedetails WHERE packageID = $1;`;
+  const { rows: resultSet } = await pool.query(query, [packageID]);
+  return resultSet[0].receiveremail;
 }
 
 export async function insertPackageTrackingDetails(
@@ -89,12 +87,12 @@ export async function insertPackageTrackingDetails(
   const query = `INSERT INTO PackageTracking
                 (packageID, driverID, expectedDeliveryTime)
                 VALUES (
-                        ?,
-                        ?,
-                        ?
-                      );`;
+                        $1,
+                        $2,
+                        $3
+                      )`;
   const params = Object.values(packageTrackingDetails);
-  await cassandraClient.execute(query, params, { prepare: true });
+  await pool.query(query, params);
 }
 
 export interface IHistoryEntry {
@@ -119,21 +117,17 @@ export interface IPackageInfo {
   expectedDeliveryTime?: Date;
 }
 
-export class NotFoundInCassandraError extends Error {}
+export class PackageNotFoundError extends Error {}
 
 export async function findPackageDetails(
   packageID: string
 ): Promise<IPackageInfo> {
-  const packageDetailsQuery = `SELECT * FROM PackageDetails WHERE packageID = ?`;
-  const pDResultSet = await cassandraClient.execute(
-    packageDetailsQuery,
-    [packageID],
-    {
-      prepare: true,
-    }
-  );
-  if (!pDResultSet.first())
-    throw new NotFoundInCassandraError(
+  const packageDetailsQuery = `SELECT * FROM PackageDetails WHERE packageID = $1`;
+  const { rows: pDResultSet } = await pool.query(packageDetailsQuery, [
+    packageID,
+  ]);
+  if (!pDResultSet[0])
+    throw new PackageNotFoundError(
       "Package does not exist in table 'packagedetails'"
     );
   const {
@@ -146,39 +140,31 @@ export async function findPackageDetails(
     weightkg,
     registered,
     expecteddeliverydate,
-  } = pDResultSet.first();
-  const packageHistoryQuery = `SELECT * FROM PackageHistory WHERE packageID = ?`;
-  const pHResultSet = await cassandraClient.execute(
-    packageHistoryQuery,
-    [packageID],
-    {
-      prepare: true,
-    }
-  );
-  if (!pHResultSet.first())
-    throw new NotFoundInCassandraError(
+  } = pDResultSet[0];
+  const packageHistoryQuery = `SELECT * FROM PackageHistory WHERE packageID = $1`;
+  const { rows: pHResultSet } = await pool.query(packageHistoryQuery, [
+    packageID,
+  ]);
+  if (!pHResultSet[0])
+    throw new PackageNotFoundError(
       "Package does not exist in table 'packagehistory'"
     );
   const history: IHistoryEntry[] = [];
-  for (const historyEntry of pHResultSet.rows) {
+  for (const historyEntry of pHResultSet) {
     history.push({
       status: PackageHistoryEnum[historyEntry.status],
       message: historyEntry.message,
       entryDate: historyEntry.entrydate,
     });
   }
-  const packageTrackingDetailsQuery = `SELECT * FROM PackageTracking WHERE packageID = ?`;
-  const pTResultSet = await cassandraClient.execute(
-    packageTrackingDetailsQuery,
-    [packageID],
-    {
-      prepare: true,
-    }
-  );
+  const packageTrackingDetailsQuery = `SELECT * FROM PackageTracking WHERE packageID = $1`;
+  const pTResultSet = await pool.query(packageTrackingDetailsQuery, [
+    packageID,
+  ]);
 
   let driverid: string | undefined, expecteddeliverytime: Date | undefined;
 
-  const trackingDetails = pTResultSet.first();
+  const trackingDetails = pTResultSet[0];
   if (trackingDetails) {
     driverid = trackingDetails.driverid;
     expecteddeliverytime = trackingDetails.expecteddeliverytime;

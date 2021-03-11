@@ -16,7 +16,7 @@ import {
   insertPackageHistory,
   findPackageDetails,
   PackageHistoryEnum,
-  NotFoundInCassandraError,
+  PackageNotFoundError,
   insertPackageTrackingDetails,
   findPackageReceieverEmail,
 } from "./repositories/packageRepo";
@@ -157,7 +157,14 @@ function postPackageCentralDelivery(app: Express) {
         };
         return res.status(200).json(response);
       } catch (error) {
-        logger.error(error);
+        if (error.code && error.code === "23505") {
+          // Code for duplicate key value violation
+          const response: IResponseJsonBody = {
+            status: 400,
+            message: "Package has already been registered at central",
+          };
+          return res.status(400).json(response);
+        }
         const response: IResponseJsonBody = {
           status: 500,
           message: "Server error, please try again later",
@@ -233,7 +240,14 @@ function postPackageInRoute(app: Express) {
         };
         return res.status(200).json(response);
       } catch (error) {
-        logger.error(error);
+        if (error.code && error.code === "23505") {
+          // Code for duplicate key value violation
+          const response: IResponseJsonBody = {
+            status: 400,
+            message: "Package has already been registered as in-route",
+          };
+          return res.status(400).json(response);
+        }
         const response: IResponseJsonBody = {
           status: 500,
           message: "Server error, please try again later",
@@ -269,7 +283,7 @@ function getPackageDetails(app: Express) {
         packageDetails["message"] = "Package found";
         return res.json(packageDetails);
       } catch (error) {
-        if (error instanceof NotFoundInCassandraError) {
+        if (error instanceof PackageNotFoundError) {
           const response: IResponseJsonBody = {
             status: 404,
             message: "Package not found",
