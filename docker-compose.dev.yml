@@ -21,11 +21,11 @@ services:
     volumes:
       - ./src:/opt/app/src/ # for dev purposes
 
-  cassandra2:
+  cassandra:
     image: omvk97/cassandra # this image will initialize the database
-    container_name: cassandra2
+    container_name: cassandra
     environment:
-      CASSANDRA_SEEDS: cassandra2
+      CASSANDRA_SEEDS: cassandra
       CASSANDRA_CLUSTER_NAME: DevCluster
       CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
       CASSANDRA_DC: Denmark

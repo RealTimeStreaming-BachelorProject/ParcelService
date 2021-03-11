@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PACKAGE_SERVICE_PORT ?? 9001;
+const PORT = process.env.PACKAGE_SERVICE_PORT ?? 80;
 
 (async () => {
   const cassandraClient = await initCassandraConnection();

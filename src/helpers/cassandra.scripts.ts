@@ -4,15 +4,14 @@ import logger from "../util/logger";
 export const cassandraClient = new cassandra.Client({
   contactPoints: JSON.parse(process.env.CASSANDRA_NODES as string),
   localDataCenter: process.env.CASSANDRA_LOCAL_DATACENTER,
-  keyspace: process.env.CASSANDRA_KEYSPACE,  
+  keyspace: process.env.CASSANDRA_KEYSPACE,
 });
 
 export async function initCassandraConnection(): Promise<Client> {
   let cassandraConnected = false;
   let retryCounter = 0;
-  const maxRetries = 5;
-  const retrySleepDurationMs = 1500;
-
+  const maxRetries = 10;
+  const retrySleepDurationMs = 1000;
   while (!cassandraConnected)
     try {
       await cassandraClient.connect();
@@ -24,7 +23,7 @@ export async function initCassandraConnection(): Promise<Client> {
 
       const sleepDuration = retrySleepDurationMs * ++retryCounter;
       logger.warn(
-        `Cassandra connection error. Retrying in ${
+        `Cassandra connection error (${retryCounter}/${maxRetries}). Retrying in ${
           sleepDuration / 1000
         } seconds`
       );
