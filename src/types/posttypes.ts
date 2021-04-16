@@ -27,6 +27,14 @@ export interface IPostPackageInRouteRequest extends Request {
   };
 }
 
+export interface IPostPackageDeliveredRequest extends Request {
+  body: {
+    packageIDs: string[];
+    driverID: string;
+    fakeScenario?: boolean;
+  };
+}
+
 export interface IGetPackageDetailsRequest extends Request {
   query: {
     packageID: string;

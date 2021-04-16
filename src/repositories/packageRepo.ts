@@ -19,6 +19,7 @@ export enum PackageHistoryEnum {
   PACKAGE_REGISTERED = 0,
   PACKAGE_AT_CENTRAL = 1,
   PACKAGE_IN_ROUTE = 2,
+  PACKAGE_DELIVERED = 3
 }
 
 export interface IPackageHistory {
