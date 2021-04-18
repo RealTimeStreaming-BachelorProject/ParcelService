@@ -214,7 +214,8 @@ function postPackageInRoute(app: Express) {
           });
 
           const expectedDeliveryTime = new Date();
-          expectedDeliveryTime.setHours(expectedDeliveryTime.getHours() + 8);
+          expectedDeliveryTime.setHours((Math.random() * 8) + 8);
+          expectedDeliveryTime.setMinutes(Math.random() * 60);
           await insertPackageTrackingDetails({
             packageID: packageID,
             driverID,
